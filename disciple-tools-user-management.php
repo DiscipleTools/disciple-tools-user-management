@@ -1,13 +1,13 @@
 <?php
 /**
- * Plugin Name: Disciple.Tools - Disciple Tools - User Management
- * Plugin URI: https://github.com/DiscipleTools/dt-user-management
- * Description: Disciple.Tools - Disciple Tools - User Management is intended to help developers and integrator jumpstart their extension of the Disciple.Tools system.
- * Text Domain: dt-user-management
+ * Plugin Name: Disciple.Tools - User Management
+ * Plugin URI: https://github.com/DiscipleTools/disciple-tools-user-management
+ * Description: Disciple.Tools - User Management adds higher volume tools to large users systems.
+ * Text Domain: disciple-tools-user-management
  * Domain Path: /languages
  * Version:  0.1
  * Author URI: https://github.com/DiscipleTools
- * GitHub Plugin URI: https://github.com/DiscipleTools/dt-user-management
+ * GitHub Plugin URI: https://github.com/DiscipleTools/disciple-tools-user-management
  * Requires at least: 4.7.0
  * (Requires 4.7+ because of the integration of the REST API at 4.7 and the security requirements of this milestone version.)
  * Tested up to: 5.6
@@ -18,13 +18,6 @@
  *          https://www.gnu.org/licenses/gpl-2.0.html
  */
 
-/**
- * Refactoring (renaming) this plugin as your own:
- * 1. @todo Rename the `dt-user-management.php file.
- * 2. @todo Refactor all occurrences of the name DT_User_Management, dt_user_management, dt-user-management, starter_post_type, and "Disciple Tools - User Management"
- * 3. @todo Update the README.md and LICENSE
- * 4. @todo Update the default.pot file if you intend to make your plugin multilingual. Use a tool like POEdit
- */
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit; // Exit if accessed directly
@@ -69,7 +62,7 @@ add_action( 'after_setup_theme', 'dt_user_management', 20 );
 //register the D.T Plugin
 add_filter( 'dt_plugins', function ( $plugins ){
     $plugin_data = get_file_data( __FILE__, [ 'Version' => 'Version', 'Plugin Name' => 'Plugin Name' ], false );
-    $plugins['dt-user-management'] = [
+    $plugins['disciple-tools-user-management'] = [
         'plugin_url' => trailingslashit( plugin_dir_url( __FILE__ ) ),
         'version' => $plugin_data['Version'] ?? null,
         'name' => $plugin_data['Plugin Name'] ?? null,
@@ -95,79 +88,14 @@ class DT_User_Management {
 
     private function __construct() {
         $is_rest = dt_is_rest();
-        /**
-         * @todo Decide if you want to use the REST API example
-         * To remove: delete this following line and remove the folder named /rest-api
-         */
-        if ( $is_rest && strpos( dt_get_url_path(), 'dt-user-management' ) !== false ) {
-            require_once( 'rest-api/rest-api.php' ); // adds starter rest api class
-        }
 
-        /**
-         * @todo Decide if you want to create a new post type
-         * To remove: delete the line below and remove the folder named /post-type
-         */
-        require_once( 'post-type/loader.php' ); // add starter post type extension to Disciple.Tools system
 
-        /**
-         * @todo Decide if you want to create a custom site-to-site link
-         * To remove: delete the line below and remove the folder named /site-link
-         */
-        require_once( 'site-link/custom-site-to-site-links.php' ); // add site to site link class and capabilities
-
-        /**
-         * @todo Decide if you want to add new charts to the metrics section
-         * To remove: delete the line below and remove the folder named /charts
-         */
-        if ( strpos( dt_get_url_path(), 'metrics' ) !== false || ( $is_rest && strpos( dt_get_url_path(), 'dt-user-management-metrics' ) !== false ) ){
-            require_once( 'charts/charts-loader.php' );  // add custom charts to the metrics area
-        }
-
-        /**
-         * @todo Decide if you want to add a custom tile or settings page tile
-         * To remove: delete the lines below and remove the folder named /tile
-         */
-        require_once( 'tile/custom-tile.php' ); // add custom tile
-        if ( 'settings' === dt_get_url_path() && ! $is_rest ) {
-            require_once( 'tile/profile-settings-tile.php' ); // add custom settings page tile
-        }
-
-        /**
-         * @todo Decide if you want to create a magic link
-         * To remove: delete the line below and remove the folder named /magic-link
-         */
-        require_once( 'magic-link/post-type-magic-link/magic-link-post-type.php' );
-        require_once( 'magic-link/magic-link-user-app.php' );
-        require_once( 'magic-link/magic-link-non-object.php' );
-        require_once( 'magic-link/magic-link-map.php' );
-//        require_once( 'magic-link/magic-link-home.php' );
-
-        /**
-         * @todo Decide if you want to add a custom admin page in the admin area
-         * To remove: delete the 3 lines below and remove the folder named /admin
-         */
-        if ( is_admin() ) {
-            require_once( 'admin/admin-menu-and-tabs.php' ); // adds starter admin page and section for plugin
-        }
-
-        /**
-         * @todo Decide if you want to support localization of your plugin
-         * To remove: delete the line below and remove the folder named /languages
-         */
         $this->i18n();
 
-        /**
-         * @todo Decide if you want to customize links for your plugin in the plugin admin area
-         * To remove: delete the lines below and remove the function named "plugin_description_links"
-         */
         if ( is_admin() ) { // adds links to the plugin description area in the plugin admin list.
             add_filter( 'plugin_row_meta', [ $this, 'plugin_description_links' ], 10, 4 );
         }
 
-        /**
-         * @todo Decide if you want to create default workflows
-         * To remove: delete the line below and remove the folder named /workflows
-         */
         require_once( 'workflows/workflows.php' );
 
     }
@@ -207,7 +135,7 @@ class DT_User_Management {
      */
     public static function deactivation() {
         // add functions here that need to happen on deactivation
-        delete_option( 'dismissed-dt-user-management' );
+        delete_option( 'dismissed-disciple-tools-user-management' );
     }
 
     /**
@@ -218,7 +146,7 @@ class DT_User_Management {
      * @return void
      */
     public function i18n() {
-        $domain = 'dt-user-management';
+        $domain = 'disciple-tools-user-management';
         load_plugin_textdomain( $domain, false, trailingslashit( dirname( plugin_basename( __FILE__ ) ) ). 'languages' );
     }
 
@@ -230,7 +158,7 @@ class DT_User_Management {
      * @return string
      */
     public function __toString() {
-        return 'dt-user-management';
+        return 'disciple-tools-user-management';
     }
 
     /**
@@ -287,18 +215,18 @@ if ( ! function_exists( 'dt_user_management_hook_admin_notice' ) ) {
             $message .= ' ' . sprintf( esc_html( 'Current Disciple.Tools version: %1$s, required version: %2$s' ), esc_html( $current_version ), esc_html( $dt_user_management_required_dt_theme_version ) );
         }
         // Check if it's been dismissed...
-        if ( ! get_option( 'dismissed-dt-user-management', false ) ) { ?>
-            <div class="notice notice-error notice-dt-user-management is-dismissible" data-notice="dt-user-management">
+        if ( ! get_option( 'dismissed-disciple-tools-user-management', false ) ) { ?>
+            <div class="notice notice-error notice-disciple-tools-user-management is-dismissible" data-notice="disciple-tools-user-management">
                 <p><?php echo esc_html( $message );?></p>
             </div>
             <script>
                 jQuery(function($) {
-                    $( document ).on( 'click', '.notice-dt-user-management .notice-dismiss', function () {
+                    $( document ).on( 'click', '.notice-disciple-tools-user-management .notice-dismiss', function () {
                         $.ajax( ajaxurl, {
                             type: 'POST',
                             data: {
                                 action: 'dismissed_notice_handler',
-                                type: 'dt-user-management',
+                                type: 'disciple-tools-user-management',
                                 security: '<?php echo esc_html( wp_create_nonce( 'wp_rest_dismiss' ) ) ?>'
                             }
                         })
@@ -322,44 +250,22 @@ if ( !function_exists( 'dt_hook_ajax_notice_handler' ) ){
     }
 }
 
-/**
- * Plugin Releases and updates
- * @todo Uncomment and change the url if you want to support remote plugin updating with new versions of your plugin
- * To remove: delete the section of code below and delete the file called version-control.json in the plugin root
- *
- * This section runs the remote plugin updating service, so you can issue distributed updates to your plugin
- *
- * @note See the instructions for version updating to understand the steps involved.
- * @link https://github.com/DiscipleTools/dt-user-management/wiki/Configuring-Remote-Updating-System
- *
- * @todo Enable this section with your own hosted file
- * @todo An example of this file can be found in (version-control.json)
- * @todo Github is a good option for delivering static json.
- */
-/**
- * Check for plugin updates even when the active theme is not Disciple.Tools
- *
- * Below is the publicly hosted .json file that carries the version information. This file can be hosted
- * anywhere as long as it is publicly accessible. You can download the version file listed below and use it as
- * a template.
- * Also, see the instructions for version updating to understand the steps involved.
- * @see https://github.com/DiscipleTools/disciple-tools-version-control/wiki/How-to-Update-the-Starter-Plugin
- */
-//add_action( 'plugins_loaded', function (){
-//    if ( is_admin() && !( is_multisite() && class_exists( "DT_Multisite" ) ) || wp_doing_cron() ){
-//        // Check for plugin updates
-//        if ( ! class_exists( 'Puc_v4_Factory' ) ) {
-//            if ( file_exists( get_template_directory() . '/dt-core/libraries/plugin-update-checker/plugin-update-checker.php' )){
-//                require( get_template_directory() . '/dt-core/libraries/plugin-update-checker/plugin-update-checker.php' );
-//            }
-//        }
-//        if ( class_exists( 'Puc_v4_Factory' ) ){
-//            Puc_v4_Factory::buildUpdateChecker(
-//                'https://raw.githubusercontent.com/DiscipleTools/dt-user-management/master/version-control.json',
-//                __FILE__,
-//                'dt-user-management'
-//            );
-//
-//        }
-//    }
-//} );
+
+add_action( 'plugins_loaded', function (){
+    if ( is_admin() && !( is_multisite() && class_exists( "DT_Multisite" ) ) || wp_doing_cron() ){
+        // Check for plugin updates
+        if ( ! class_exists( 'Puc_v4_Factory' ) ) {
+            if ( file_exists( get_template_directory() . '/dt-core/libraries/plugin-update-checker/plugin-update-checker.php' )){
+                require( get_template_directory() . '/dt-core/libraries/plugin-update-checker/plugin-update-checker.php' );
+            }
+        }
+        if ( class_exists( 'Puc_v4_Factory' ) ){
+            Puc_v4_Factory::buildUpdateChecker(
+                'https://raw.githubusercontent.com/DiscipleTools/disciple-tools-user-management/master/version-control.json',
+                __FILE__,
+                'disciple-tools-user-management'
+            );
+
+        }
+    }
+} );

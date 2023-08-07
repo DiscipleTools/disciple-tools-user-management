@@ -2,4 +2,4 @@
 {translation-domain}-{localisation}.po
 
 ex:
-dt-user-management-fr_FR.po
+disciple-tools-user-management-fr_FR.po

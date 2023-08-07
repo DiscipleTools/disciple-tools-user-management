@@ -18,7 +18,7 @@ jobs:
 
       # - name: Run test suite
       #   run: composer run-script test
-      # cp -r dt-user-management.php includes languages spinner.svg version-control.json LICENSE SECURITY.md disciple-tools-user-management/
+      # cp -r disciple-tools-user-management.php includes languages spinner.svg version-control.json LICENSE SECURITY.md disciple-tools-user-management/
       # Below borrowed from https://github.com/actions/upload-release-asset
       - name: Build project
         run: |

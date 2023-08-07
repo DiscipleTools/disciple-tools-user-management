@@ -29,9 +29,9 @@ Current Disciple.Tools user management is not scalable for large numbers of user
 ## Contribution
 
 Contributions welcome. You can report issues and bugs in the
-[Issues](https://github.com/DiscipleTools/dt-user-management/issues) section of the repo. You can present ideas
-in the [Discussions](https://github.com/DiscipleTools/dt-user-management/discussions) section of the repo. And
-code contributions are welcome using the [Pull Request](https://github.com/DiscipleTools/dt-user-management/pulls)
+[Issues](https://github.com/DiscipleTools/disciple-tools-user-management/issues) section of the repo. You can present ideas
+in the [Discussions](https://github.com/DiscipleTools/disciple-tools-user-management/discussions) section of the repo. And
+code contributions are welcome using the [Pull Request](https://github.com/DiscipleTools/disciple-tools-user-management/pulls)
 system for git. For a more details on contribution see the
-[contribution guidelines](https://github.com/DiscipleTools/dt-user-management/blob/master/CONTRIBUTING.md).
+[contribution guidelines](https://github.com/DiscipleTools/disciple-tools-user-management/blob/master/CONTRIBUTING.md).
 
