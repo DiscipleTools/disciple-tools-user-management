@@ -5,14 +5,14 @@ if ( ! defined( 'ABSPATH' ) ) {
 } // Exit if accessed directly
 
 /**
- * Class Disciple_Tools_Plugin_Starter_Template_Workflows
+ * Class DT_User_Management_Workflows
  *
  * @since  1.11.0
  */
-class Disciple_Tools_Plugin_Starter_Template_Workflows {
+class DT_User_Management_Workflows {
 
     /**
-     * Disciple_Tools_Plugin_Starter_Template_Workflows The single instance of Disciple_Tools_Plugin_Starter_Template_Workflows.
+     * DT_User_Management_Workflows The single instance of DT_User_Management_Workflows.
      *
      * @var    object
      * @access private
@@ -21,11 +21,11 @@ class Disciple_Tools_Plugin_Starter_Template_Workflows {
     private static $_instance = null;
 
     /**
-     * Main Disciple_Tools_Plugin_Starter_Template_Workflows Instance
+     * Main DT_User_Management_Workflows Instance
      *
-     * Ensures only one instance of Disciple_Tools_Plugin_Starter_Template_Workflows is loaded or can be loaded.
+     * Ensures only one instance of DT_User_Management_Workflows is loaded or can be loaded.
      *
-     * @return Disciple_Tools_Plugin_Starter_Template_Workflows instance
+     * @return DT_User_Management_Workflows instance
      * @since  1.11.0
      */
     public static function instance() {
@@ -37,7 +37,7 @@ class Disciple_Tools_Plugin_Starter_Template_Workflows {
     }
 
     /**
-     * Disciple_Tools_Plugin_Starter_Template_Workflows constructor.
+     * DT_User_Management_Workflows constructor.
      */
     public function __construct() {
         add_filter( 'dt_workflows', [ $this, 'fetch_default_workflows_filter' ], 10, 2 );
@@ -97,8 +97,8 @@ class Disciple_Tools_Plugin_Starter_Template_Workflows {
             'actions'    => [
                 Disciple_Tools_Workflows_Defaults::new_action( Disciple_Tools_Workflows_Defaults::$action_update,
                     [
-                        'id'    => 'disciple_tools_plugin_starter_template_text',
-                        'label' => $dt_fields['disciple_tools_plugin_starter_template_text']['name']
+                        'id'    => 'dt_user_management_text',
+                        'label' => $dt_fields['dt_user_management_text']['name']
                     ], [
                         'id'    => 'Auto Filled By Workflow Engine',
                         'label' => 'Auto Filled By Workflow Engine'
@@ -109,4 +109,4 @@ class Disciple_Tools_Plugin_Starter_Template_Workflows {
     }
 }
 
-Disciple_Tools_Plugin_Starter_Template_Workflows::instance();
+DT_User_Management_Workflows::instance();
