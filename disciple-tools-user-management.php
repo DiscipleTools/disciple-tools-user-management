@@ -24,7 +24,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Gets the instance of the `DT_User_Management` class.
+ * Gets the instance of the `Disciple_Tools_User_Management` class.
  *
  * @since  0.1
  * @access public
@@ -54,7 +54,7 @@ function dt_user_management() {
         require_once get_template_directory() . '/dt-core/global-functions.php';
     }
 
-    return DT_User_Management::instance();
+    return Disciple_Tools_User_Management::instance();
 
 }
 add_action( 'after_setup_theme', 'dt_user_management', 20 );
@@ -76,7 +76,7 @@ add_filter( 'dt_plugins', function ( $plugins ){
  * @since  0.1
  * @access public
  */
-class DT_User_Management {
+class Disciple_Tools_User_Management {
 
     private static $_instance = null;
     public static function instance() {
@@ -201,8 +201,8 @@ class DT_User_Management {
 
 
 // Register activation hook.
-register_activation_hook( __FILE__, [ 'DT_User_Management', 'activation' ] );
-register_deactivation_hook( __FILE__, [ 'DT_User_Management', 'deactivation' ] );
+register_activation_hook( __FILE__, [ 'Disciple_Tools_User_Management', 'activation' ] );
+register_deactivation_hook( __FILE__, [ 'Disciple_Tools_User_Management', 'deactivation' ] );
 
 
 if ( ! function_exists( 'dt_user_management_hook_admin_notice' ) ) {
