@@ -24,7 +24,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Gets the instance of the `DT_User_Management` class.
+ * Gets the instance of the `DT_User_Management_Plugin` class.
  *
  * @since  0.1
  * @access public
@@ -54,7 +54,7 @@ function dt_user_management() {
         require_once get_template_directory() . '/dt-core/global-functions.php';
     }
 
-    return DT_User_Management::instance();
+    return DT_User_Management_Plugin::instance();
 
 }
 add_action( 'after_setup_theme', 'dt_user_management', 20 );
@@ -76,7 +76,7 @@ add_filter( 'dt_plugins', function ( $plugins ){
  * @since  0.1
  * @access public
  */
-class DT_User_Management {
+class DT_User_Management_Plugin {
 
     private static $_instance = null;
     public static function instance() {
@@ -89,7 +89,6 @@ class DT_User_Management {
     private function __construct() {
         $is_rest = dt_is_rest();
 
-
         $this->i18n();
 
         if ( is_admin() ) { // adds links to the plugin description area in the plugin admin list.
@@ -98,6 +97,15 @@ class DT_User_Management {
 
         require_once( 'workflows/workflows.php' );
 
+        require_once( 'dt-users/loader.php' );
+
+    }
+
+    public static function plugin_dir(){
+        return plugin_dir_path( __FILE__ );
+    }
+    public static function plugin_url(){
+        return plugin_dir_url( __FILE__ );
     }
 
     /**
@@ -201,8 +209,8 @@ class DT_User_Management {
 
 
 // Register activation hook.
-register_activation_hook( __FILE__, [ 'DT_User_Management', 'activation' ] );
-register_deactivation_hook( __FILE__, [ 'DT_User_Management', 'deactivation' ] );
+register_activation_hook( __FILE__, [ 'DT_User_Management_Plugin', 'activation' ] );
+register_deactivation_hook( __FILE__, [ 'DT_User_Management_Plugin', 'deactivation' ] );
 
 
 if ( ! function_exists( 'dt_user_management_hook_admin_notice' ) ) {
@@ -252,10 +260,10 @@ if ( !function_exists( 'dt_hook_ajax_notice_handler' ) ){
 
 
 add_action( 'plugins_loaded', function (){
-    if ( is_admin() && !( is_multisite() && class_exists( "DT_Multisite" ) ) || wp_doing_cron() ){
+    if ( is_admin() && !( is_multisite() && class_exists( 'DT_Multisite' ) ) || wp_doing_cron() ){
         // Check for plugin updates
         if ( ! class_exists( 'Puc_v4_Factory' ) ) {
-            if ( file_exists( get_template_directory() . '/dt-core/libraries/plugin-update-checker/plugin-update-checker.php' )){
+            if ( file_exists( get_template_directory() . '/dt-core/libraries/plugin-update-checker/plugin-update-checker.php' ) ){
                 require( get_template_directory() . '/dt-core/libraries/plugin-update-checker/plugin-update-checker.php' );
             }
         }
