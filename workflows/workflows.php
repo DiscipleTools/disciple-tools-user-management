@@ -5,14 +5,14 @@ if ( ! defined( 'ABSPATH' ) ) {
 } // Exit if accessed directly
 
 /**
- * Class DT_User_Management_Workflows
+ * Class Disciple_Tools_User_Management_Workflows
  *
  * @since  1.11.0
  */
-class DT_User_Management_Workflows {
+class Disciple_Tools_User_Management_Workflows {
 
     /**
-     * DT_User_Management_Workflows The single instance of DT_User_Management_Workflows.
+     * Disciple_Tools_User_Management_Workflows The single instance of Disciple_Tools_User_Management_Workflows.
      *
      * @var    object
      * @access private
@@ -21,11 +21,11 @@ class DT_User_Management_Workflows {
     private static $_instance = null;
 
     /**
-     * Main DT_User_Management_Workflows Instance
+     * Main Disciple_Tools_User_Management_Workflows Instance
      *
-     * Ensures only one instance of DT_User_Management_Workflows is loaded or can be loaded.
+     * Ensures only one instance of Disciple_Tools_User_Management_Workflows is loaded or can be loaded.
      *
-     * @return DT_User_Management_Workflows instance
+     * @return Disciple_Tools_User_Management_Workflows instance
      * @since  1.11.0
      */
     public static function instance() {
@@ -37,7 +37,7 @@ class DT_User_Management_Workflows {
     }
 
     /**
-     * DT_User_Management_Workflows constructor.
+     * Disciple_Tools_User_Management_Workflows constructor.
      */
     public function __construct() {
         add_filter( 'dt_workflows', [ $this, 'fetch_default_workflows_filter' ], 10, 2 );
@@ -109,4 +109,4 @@ class DT_User_Management_Workflows {
     }
 }
 
-DT_User_Management_Workflows::instance();
+Disciple_Tools_User_Management_Workflows::instance();
