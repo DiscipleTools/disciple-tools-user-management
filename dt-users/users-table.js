@@ -17,6 +17,14 @@ jQuery(document).ready(function($) {
 import {html, css, LitElement} from 'https://cdn.jsdelivr.net/gh/lit/dist@2/core/lit-core.min.js';
 
 export class UsersTable extends LitElement {
+  static properties = {
+    users: {type: Array, state:true},
+    search: {type: String, state:true},
+    sort: {type: String, state:true},
+    loading : {type: Boolean, state:true},
+    total_users : {type: Number, state:true}
+  }
+
   constructor() {
     super();
 
@@ -45,72 +53,6 @@ export class UsersTable extends LitElement {
     this.users = users.users;
     this.total_users = users.total_users;
 
-  }
-
-  static properties = {
-    users: {type: Array, state:true},
-    search: {type: String, state:true},
-    sort: {type: String, state:true},
-    loading : {type: Boolean, state:true},
-    total_users : {type: Number, state:true}
-  }
-
-  static get styles() {
-    return [
-      css`
-        table {
-          font-family: arial, sans-serif;
-          border-collapse: collapse;
-          width: 100%;
-          table-layout: fixed;
-        }
-        
-        td, th {
-          border: 1px solid #dddddd;
-          text-align: left;
-          padding: 8px;
-          //width: 150px;
-        }
-        th[data-field="ID"],td[data-field="ID"] {
-          width: 50px;
-        }
-        
-        tr:not(.filter-row):nth-child(even) {
-          background-color: #eee;
-        }
-        .sortable th {
-          background-repeat: no-repeat;
-          background-position: center right;
-          padding-right:1.5rem;
-          background-image: var(--sort-both);
-        }
-        .sortable .sorting_desc {
-          background-image: var(--sort-desc);
-        }
-        .sortable .sorting_asc {
-          background-image: var(--sort-asc);
-        }
-        #title-row {
-          display: flex;
-          justify-content: space-between;
-        }
-        .search-section {
-          margin: auto 0;
-        }
-        .filter-row td {
-          border: none;
-        }
-        .filter-row td select {
-          width: 100%;
-        }
-        .filter-select {
-          width: 100%;
-        }
-        .loading-table {
-          display: none;
-        }
-      `
-    ]
   }
 
   open_edit_modal(){
@@ -224,6 +166,63 @@ export class UsersTable extends LitElement {
             ) : html`` }
         </table>
     `;
+  }
+  static get styles() {
+    return [
+      css`
+        table {
+          font-family: arial, sans-serif;
+          border-collapse: collapse;
+          width: 100%;
+          table-layout: fixed;
+        }
+        
+        td, th {
+          border: 1px solid #dddddd;
+          text-align: left;
+          padding: 8px;
+          //width: 150px;
+        }
+        th[data-field="ID"],td[data-field="ID"] {
+          width: 50px;
+        }
+        
+        tr:not(.filter-row):nth-child(even) {
+          background-color: #eee;
+        }
+        .sortable th {
+          background-repeat: no-repeat;
+          background-position: center right;
+          padding-right:1.5rem;
+          background-image: var(--sort-both);
+        }
+        .sortable .sorting_desc {
+          background-image: var(--sort-desc);
+        }
+        .sortable .sorting_asc {
+          background-image: var(--sort-asc);
+        }
+        #title-row {
+          display: flex;
+          justify-content: space-between;
+        }
+        .search-section {
+          margin: auto 0;
+        }
+        .filter-row td {
+          border: none;
+        }
+        .filter-row td select {
+          width: 100%;
+        }
+        .filter-select {
+          width: 100%;
+        }
+        .loading-table {
+          display: none;
+        }
+      `
+    ]
   }
 }
 
