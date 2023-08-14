@@ -196,7 +196,11 @@ export class UsersTable extends LitElement {
                       //text and number fields
                       if ( field.type === 'text' || field.type === 'number' ){
                         return html`<td>${user[k]}</td>`
-                      } else 
+                      } else
+                      //date fields
+                      if ( field.type === 'date' ){
+                        return html`<td>${user[k] ? window.SHAREDFUNCTIONS.formatDate(user[k]):''}</td>`
+                      } else
                       //array fields   
                       if ( ['array', 'array_keys'].includes(field.type) ){
                         let labels = (user[k] || []).map(v=>{

@@ -36,7 +36,6 @@ class DT_Users_Table extends DT_Metrics_Chart_Base
         add_filter( 'script_loader_tag', [ $this, 'script_loader_tag' ], 10, 3 );
 
         add_filter( 'dt_users_fields', [ $this, 'dt_users_fields' ], 10, 1 );
-        add_filter( 'dt_users_list', [ $this, 'dt_users_list' ], 10, 2 );
     }
 
     public function script_loader_tag( $tag, $handle, $src ) {
@@ -142,7 +141,6 @@ class DT_Users_Table extends DT_Metrics_Chart_Base
         return self::get_users( [ 'locale' ], $params );
     }
 
-
     public static function user_fields(){
         global $wpdb;
         $fields = [
@@ -181,6 +179,7 @@ class DT_Users_Table extends DT_Metrics_Chart_Base
                 'label' => __( 'Locale', 'disciple_tools' ),
                 'options' => dt_get_available_languages( true ),
                 'type' => 'key_select',
+                'hidden' => true,
             ],
             'user_languages' => [
                 'table' => 'usermeta_table',
@@ -260,14 +259,10 @@ class DT_Users_Table extends DT_Metrics_Chart_Base
 
         $user_fields = self::user_fields();
         $sort_sql = '';
-        if ( !empty( $params['sort'] ) ){
-            $dir = 'ASC';
-            $sort_field = $params['sort'];
-            if ( strpos( $params['sort'], '-' ) === 0 ){
-                $dir = 'DESC';
-                //remove leading dash
-                $sort_field = substr( $params['sort'], 1 );
-            }
+        $sort = $params['sort'] ?? '';
+        $dir = ( !empty( $sort ) && $sort[0] === '-' ) ? 'DESC' : 'ASC';
+        $sort_field = str_replace( '-', '', $sort );
+        if ( !empty( $sort_field ) ){
             $table = isset( $user_fields[$sort_field]['table'] ) ? $user_fields[$sort_field]['table'] : '';
             if ( in_array( $table, [ 'users_table', 'usermeta_table' ] ) ){
                 $table = $user_fields[$sort_field]['table'];
@@ -329,6 +324,45 @@ class DT_Users_Table extends DT_Metrics_Chart_Base
                     }
                 }
             }
+            if ( $field_value['table'] === 'postmeta' ){
+                $meta_key = $field_value['meta_key'];
+                $meta_value = $field_value['meta_value'];
+                $select .= ", $field_key.count as $field_key";
+                $inner = '';
+                if ( !empty( $meta_key ) ){
+                    $inner = "INNER JOIN $wpdb->postmeta pm2 ON ( pm2.post_id = pm.post_id AND pm2.meta_key = '$meta_key' )";
+                }
+                if ( !empty( $meta_key ) && !empty( $meta_value ) ){
+                    $inner = "INNER JOIN $wpdb->postmeta pm2 ON ( pm2.post_id = pm.post_id AND pm2.meta_key = '$meta_key' AND pm2.meta_value = '$meta_value' )";
+                }
+                $joins .= " LEFT JOIN ( 
+                    SELECT REPLACE(pm.meta_value, 'user-', '') as user_id, COUNT(pm.post_id) as count
+                    FROM $wpdb->postmeta pm
+                    $inner
+                    WHERE pm.meta_key = 'assigned_to'
+                    GROUP BY pm.meta_value
+                ) $field_key ON ( $field_key.user_id = users.ID ) ";
+
+                if ( $sort_field === $field_key ){
+                    $sort_sql = " ORDER BY $field_key.count $dir ";
+                }
+            }
+            if ( $field_value['table'] === 'dt_activity_log' ){
+                $select .= ", $field_key.last_activity as $field_key";
+                $joins .= " LEFT JOIN ( SELECT user_id,
+                    log.hist_time as last_activity
+                    FROM $wpdb->dt_activity_log as log
+                    WHERE histid IN (
+                        SELECT MAX( histid )
+                        FROM $wpdb->dt_activity_log
+                        GROUP BY user_id
+                    )
+                    GROUP BY user_id,  last_activity
+                ) $field_key ON ( $field_key.user_id = users.ID ) ";
+                if ( $sort_field === $field_key ){
+                    $sort_sql = " ORDER BY $field_key.last_activity $dir ";
+                }
+            }
         }
 
         //phpcs:disable
@@ -348,7 +382,7 @@ class DT_Users_Table extends DT_Metrics_Chart_Base
         ARRAY_A );
         //phpcs:enable
 
-
+        //get location names
         $location_grid_ids = [];
         foreach ( $users_query as $users ){
             if ( !empty( $users['location_grid'] ) ){
@@ -356,7 +390,6 @@ class DT_Users_Table extends DT_Metrics_Chart_Base
             }
         }
         $location_grid_ids = array_unique( $location_grid_ids );
-
         $location_grid_ids_sql = dt_array_to_sql( $location_grid_ids );
         //phpcs:disable
         //already sanitized IN value
@@ -414,83 +447,43 @@ class DT_Users_Table extends DT_Metrics_Chart_Base
     }
 
 
-
     public function dt_users_fields( $fields ){
         $fields['number_new_assigned'] = [
             'label' => 'Accept Needed',
             'type' => 'number',
-            'table' => 'calculation',
+            'table' => 'postmeta',
+            'meta_key' => 'overall_status',
+            'meta_value' => 'assigned',
         ];
         $fields['number_active'] = [
             'label' => 'Active',
             'type' => 'number',
-            'table' => 'calculation',
+            'table' => 'postmeta',
+            'meta_key' => 'overall_status',
+            'meta_value' => 'active',
         ];
         $fields['number_assigned_to'] = [
             'label' => 'Assigned',
             'type' => 'number',
-            'table' => 'calculation',
+            'table' => 'postmeta',
+            'meta_key' => 'assigned_to',
+            'hidden' => true,
         ];
         $fields['number_update'] = [
             'label' => 'Update Needed',
             'type' => 'number',
-            'table' => 'calculation',
+            'table' => 'postmeta',
+            'meta_key' => 'requires_update',
+            'meta_value' => '1',
+        ];
+        $fields['last_activity'] = [
+            'label' => 'Last Activity',
+            'type' => 'date',
+            'table' => 'dt_activity_log',
+            'meta_key' => 'activity_date',
         ];
 
         return $fields;
     }
-
-    public function dt_users_list( $users, $params ){
-        global $wpdb;
-        $user_data_query = $wpdb->get_results("
-            SELECT
-                assigned_to.meta_value as assigned_to,
-                count( un.meta_value ) as number_update,
-                count(assigned_to.meta_value) as number_assigned_to,
-                count(new_assigned.post_id) as number_new_assigned,
-                count(active.post_id) as number_active
-            FROM $wpdb->postmeta as assigned_to
-            INNER JOIN $wpdb->posts as p on ( p.ID = assigned_to.post_id and p.post_type = 'contacts' )
-            LEFT JOIN $wpdb->postmeta un on ( un.post_id = assigned_to.post_id AND un.meta_key = 'requires_update' AND un.meta_value = '1')
-            LEFT JOIN $wpdb->postmeta as active on (active.post_id = p.ID and active.meta_key = 'overall_status' and active.meta_value = 'active' )
-            LEFT JOIN $wpdb->postmeta as new_assigned on (new_assigned.post_id = p.ID and new_assigned.meta_key = 'overall_status' and new_assigned.meta_value = 'assigned' )
-            WHERE assigned_to.meta_key = 'assigned_to'
-            AND assigned_to.post_id NOT IN (
-                SELECT post_id
-                FROM $wpdb->postmeta
-                WHERE meta_key = 'type' AND meta_value = 'user'
-                GROUP BY post_id
-            )
-            GROUP BY assigned_to.meta_value
-        ", ARRAY_A );
-
-        $user_data = [];
-        foreach ( $user_data_query as $data ){
-            $user_data[ $data['assigned_to'] ] = $data;
-        }
-
-        foreach ( $users as &$user ){
-            $user['number_update'] = intval( $user_data[ 'user-' . $user['ID'] ]['number_update'] ?? 0 );
-            $user['number_assigned_to'] = intval( $user_data[ 'user-' . $user['ID'] ]['number_assigned_to'] ?? 0 );
-            $user['number_new_assigned'] = intval( $user_data[ 'user-' . $user['ID'] ]['number_new_assigned'] ?? 0 );
-            $user['number_active'] = intval( $user_data[ 'user-' . $user['ID'] ]['number_active'] ?? 0 );
-        }
-
-        $sort = $params['sort'] ?? '';
-        if ( in_array( str_replace( '-', '', $sort ), [ 'number_update', 'number_assigned_to', 'number_new_assigned', 'number_active' ] ) ){
-            $dir = $sort[0] == '-' ? 'DESC' : 'ASC';
-            $sort_field = str_replace( '-', '', $sort );
-            usort( $users, function( $a, $b ) use ( $sort_field ){
-                return $a[$sort_field] <=> $b[$sort_field];
-            });
-            if ( $dir === 'DESC' ){
-                $users = array_reverse( $users );
-            }
-        }
-
-        return $users;
-    }
-
-
 }
 new DT_Users_Table();
