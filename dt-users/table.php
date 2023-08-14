@@ -74,6 +74,14 @@ class DT_Users_Table extends DT_Metrics_Chart_Base
             filemtime( DT_User_Management_Plugin::plugin_dir() . 'dt-users/users-table.js' ),
         );
 
+        $fields = $this->user_fields();
+
+        if ( isset( $fields['location_grid'] ) ){
+            //used locations
+            $locations = $this->get_used_user_locations();
+            $fields['location_grid']['options'] = $locations;
+        }
+
         wp_localize_script( 'dt_users_table', 'dt_users_table', [
             'translations' => [
                 'go' => __( 'Go', 'disciple_tools' ),
@@ -81,12 +89,44 @@ class DT_Users_Table extends DT_Metrics_Chart_Base
                 'users' => __( 'Users', 'disciple_tools' ),
                 'showing_x_of_y' => __( 'Showing %1$s of %2$s', 'disciple_tools' ),
             ],
-            'fields' => $this->user_fields(),
-            'roles' => Disciple_Tools_Roles::get_dt_roles_and_permissions(),
-            'languages' => dt_get_available_languages( true ),
-            'user_languages' => dt_get_option( 'dt_working_languages' ) ?: [],
+            'fields' => $fields,
         ] );
 
+    }
+
+    public function get_used_user_locations(){
+        global $wpdb;
+        $used_location_grids = $wpdb->get_results( $wpdb->prepare( "
+            SELECT DISTINCT( g.grid_id ),
+            CASE
+                WHEN g.level = 0
+                    THEN g.alt_name
+                WHEN g.level = 1
+                    THEN CONCAT( (SELECT country.alt_name FROM $wpdb->dt_location_grid as country WHERE country.grid_id = g.admin0_grid_id LIMIT 1), ' > ',
+                g.alt_name )
+                WHEN g.level >= 2
+                    THEN CONCAT( (SELECT country.alt_name FROM $wpdb->dt_location_grid as country WHERE country.grid_id = g.admin0_grid_id LIMIT 1), ' > ',
+                (SELECT a1.alt_name FROM $wpdb->dt_location_grid AS a1 WHERE a1.grid_id = g.admin1_grid_id LIMIT 1), ' > ',
+                g.alt_name )
+                ELSE g.alt_name
+            END as label
+            FROM $wpdb->dt_location_grid as g
+            INNER JOIN (
+                SELECT
+                    g.grid_id
+                FROM $wpdb->usermeta as um
+                JOIN $wpdb->dt_location_grid as g ON g.grid_id=um.meta_value
+                WHERE um.meta_key = %s
+            ) as counter ON (g.grid_id = counter.grid_id)
+
+            ORDER BY g.country_code, CHAR_LENGTH(label)
+            ", $wpdb->prefix . 'location_grid' ),
+            ARRAY_A
+        );
+        //key as index
+        $used_location_grids = array_combine( wp_list_pluck( $used_location_grids, 'grid_id' ), $used_location_grids );
+
+        return $used_location_grids;
     }
 
     public function add_api_routes() {
@@ -284,6 +324,9 @@ class DT_Users_Table extends DT_Metrics_Chart_Base
                 if ( $field_value['type'] === 'location_grid' ){
                     $select .= ", GROUP_CONCAT(um_$field_key.meta_value) as $field_key";
                     $joins .= " LEFT JOIN $wpdb->usermeta as um_$field_key on ( um_$field_key.user_id = users.ID AND um_$field_key.meta_key = '{$field_value['key']}' ) ";
+                    if ( !empty( $filter[$field_key] ) ){
+                        $where .= $wpdb->prepare( " AND um_$field_key.meta_value LIKE %s ", $filter[$field_key] ); //phpcs:ignore
+                    }
                 }
             }
         }
