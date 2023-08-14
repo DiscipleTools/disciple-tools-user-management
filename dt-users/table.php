@@ -77,6 +77,9 @@ class DT_Users_Table extends DT_Metrics_Chart_Base
         wp_localize_script( 'dt_users_table', 'dt_users_table', [
             'translations' => [
                 'go' => __( 'Go', 'disciple_tools' ),
+                'search' => __( 'Search', 'disciple_tools' ),
+                'users' => __( 'Users', 'disciple_tools' ),
+                'showing_x_of_y' => __( 'Showing %1$s of %2$s', 'disciple_tools' ),
             ],
             'fields' => $this->user_fields(),
             'roles' => Disciple_Tools_Roles::get_dt_roles_and_permissions(),

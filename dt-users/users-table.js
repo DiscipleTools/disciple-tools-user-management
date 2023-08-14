@@ -22,6 +22,8 @@ export class UsersTable extends LitElement {
 
     this.users = [{name:'loading...'}]
     this.getUsers();
+
+    this.translations = window.SHAREDFUNCTIONS.escapeObject( window.dt_users_table.translations );
   }
 
   async getUsers( search = '', sort = '', filter ) {
@@ -149,11 +151,11 @@ export class UsersTable extends LitElement {
     return html`
         <div id="title-row">
             <div>
-                <h2>USERS ${this.loading ? html`<img style="height:1em;" src="${window.wpApiShare.template_dir}/spinner.svg" />` : html`<span style="font-size: 14px;font-weight: normal">Showing ${this.users.length} of ${this.total_users} users`}</span></h2>
+                <h2>${this.translations.users} ${this.loading ? html`<img style="height:1em;" src="${window.wpApiShare.template_dir}/spinner.svg" alt="spinner" />` : html`<span style="font-size: 14px;font-weight: normal">${this.translations.showing_x_of_y.replace('%1$s', this.users.length).replace('%2$s', this.total_users)}`}</span></h2>
             </div>
             <div class="search-section">
-                <input id="search-users" type="text" placeholder="search">
-                <button class="button" @click="${this.search_text}">Go</button>
+                <input id="search-users" type="text" placeholder="${this.translations.search}">
+                <button class="button" @click="${this.search_text}">${this.translations.go}</button>
             </div>
 
         </div>
