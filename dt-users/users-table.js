@@ -24,19 +24,30 @@ export class UsersTable extends LitElement {
     this.getUsers();
   }
 
-  async getUsers( search = '', sort = '' ) {
-    let users =  await fetch(`/wp-json/user-management/v2/users?limit=500&search=${search}&sort=${sort}`, {
+  async getUsers( search = '', sort = '', filter ) {
+    this.loading = true;
+    let users =  await fetch(`/wp-json/user-management/v2/get-users`, {
+      method: 'POST',
+      body: JSON.stringify({
+        limit: 500,
+        search,
+        sort,
+        filter
+      }),
       headers: {
+        "Content-Type": "application/json",
         'X-WP-Nonce': window.wpApiShare.nonce
       }
     }).then(res => res.json());
+    this.loading = false;
     this.users = users;
   }
 
   static properties = {
     users: {type: Array, state:true},
     search: {type: String, state:true},
-    sort: {type: String, state:true}
+    sort: {type: String, state:true},
+    loading : {type: Boolean, state:true},
   }
 
   static get styles() {
@@ -46,15 +57,20 @@ export class UsersTable extends LitElement {
           font-family: arial, sans-serif;
           border-collapse: collapse;
           width: 100%;
+          table-layout: fixed;
         }
         
         td, th {
           border: 1px solid #dddddd;
           text-align: left;
           padding: 8px;
+          //width: 150px;
+        }
+        th[data-field="ID"],td[data-field="ID"] {
+          width: 50px;
         }
         
-        tr:nth-child(even) {
+        tr:not(.filter-row):nth-child(even) {
           background-color: #dddddd;
         }
         .sortable th {
@@ -68,6 +84,25 @@ export class UsersTable extends LitElement {
         }
         .sortable .sorting_asc {
           background-image: var(--sort-asc);
+        }
+        #title-row {
+          display: flex;
+          justify-content: space-between;
+        }
+        .search-section {
+          margin: auto 0;
+        }
+        .filter-row td {
+          border: none;
+        }
+        .filter-row td select {
+          width: 100%;
+        }
+        .filter-select {
+          width: 100%;
+        }
+        .loading-table {
+          display: none;
         }
       `
     ]
@@ -83,29 +118,65 @@ export class UsersTable extends LitElement {
   }
 
   sort_column(e){
-    let column = e.target.id;
-    if ( this.sort === column ) {
-      column = column.includes('-') ? column.replace('-', '') : '-' + column
+    let id = e.target.id;
+    let sort = e.target.id;
+    if ( this.sort === sort ) {
+      sort = sort.includes('-') ? sort.replace('-', '') : '-' + sort
     }
-    this.getUsers( this.search, column )
+    this.getUsers( this.search, sort )
 
     //add sort_asc or sort_desc class to column
     this.shadowRoot.querySelectorAll('th').forEach(th=> th.classList.remove('sorting_asc', 'sorting_desc'));
-    e.target.classList.add(column.includes('-') ? 'sorting_desc' : 'sorting_asc');
+    this.shadowRoot.querySelector('#' + id).classList.add(sort.includes('-') ? 'sorting_desc' : 'sorting_asc');
 
-    this.sort = column;
+    this.sort = sort;
+  }
+
+  filter_column(column, value, e){
+    let filter = {};
+    filter[column] = value;
+    this.getUsers( this.search, this.sort, filter )
+
+    //set all filter selects to empty
+    this.shadowRoot.querySelectorAll('.filter-select').forEach(select=> select.value = '');
+    e.target.value = value;
   }
 
   render() {
     return html`
-        <h2>TABLE OF USERS</h2> 
-        <input id="search-users" type="text" placeholder="search"><button @click="${this.search_text}">Go</button>
+        <div id="title-row">
+            <div>
+                <h2>TABLE OF USERS ${this.loading ? html`<img style="height:1em;" src="${window.wpApiShare.template_dir}/spinner.svg" />` : ''}</h2>
+            </div>
+            <div class="search-section">
+                <input id="search-users" type="text" placeholder="search">
+                <button class="button" @click="${this.search_text}">Go</button>
+            </div>
+
+        </div>
         <br>
         <table class="sortable">
+            <tr class="filter-row">
+                ${Object.keys(window.dt_users_table.fields).map(k=>{
+                  if ( window.dt_users_table.fields[k].hidden === true  ) return;
+                  if ( window.dt_users_table.fields[k].options  ) {
+                    let options = window.dt_users_table.fields[k].options;
+                    return html`<td data-field="${k}">
+                        <select class="filter-select" @change="${e=>this.filter_column(k,e.target.value, e)}">
+                            <option value=""></option>
+                            ${Object.keys(options).map(o=> html`<option value="${o}">${options[o].label}</option>`)}
+                        </select>
+                    </td>`
+                  } else {
+                    return html`<td data-field="${k}"></td>`
+                  }
+                  
+                })}
+            </tr>
             <tr>
                 ${Object.keys(window.dt_users_table.fields).map(k=>{
                   if ( window.dt_users_table.fields[k].hidden === true  ) return;
-                  return html`<th id="${k}" @click="${this.sort_column}">
+                  return html`<th id="${k}" data-field="${k}" @click="${this.sort_column}">
                       ${window.dt_users_table.fields[k].label}
                   </th>`
                 })}

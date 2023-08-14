@@ -84,8 +84,8 @@ class DT_Users_Table extends DT_Metrics_Chart_Base
     }
 
     public function add_api_routes() {
-        register_rest_route( $this->namespace, '/users', [
-            'methods'  => 'GET',
+        register_rest_route( $this->namespace, '/get-users', [
+            'methods'  => 'POST',
             'callback' => [ $this, 'get_users_endpoint' ],
             'permission_callback' => [ $this, 'has_permission' ]
         ] );
@@ -194,12 +194,15 @@ class DT_Users_Table extends DT_Metrics_Chart_Base
         if ( isset( $params['limit'] ) ){
             $limit = $params['limit'];
         }
+        $filter = !empty( $params['filter'] ) ? $params['filter'] : [];
+
         $select = '';
         $joins = '';
         $where = '';
 
-        $search = '';
+        $search = !empty( $params['search'] ) ? $params['search'] : '';
         if ( !empty( $params['search'] ) ){
+            $search = esc_sql( $search );
             $columns = [ 'user_login', 'user_email', 'display_name' ];
             $where .= ' AND ( ';
             foreach ( $columns as $column ){
@@ -237,8 +240,6 @@ class DT_Users_Table extends DT_Metrics_Chart_Base
             $fields_by_type[ $field_value['type'] ][] = $field_key;
         }
 
-        unset( $user_fields['capabilities'] );
-
         foreach ( $user_fields as $field_key => $field_value ){
             if ( $field_value['table'] === 'users_table' ){
                 $select .= ", users.$field_key as $field_key";
@@ -251,11 +252,27 @@ class DT_Users_Table extends DT_Metrics_Chart_Base
                 if ( $field_value['type'] === 'key_select' ){
                     $select .= ", um_$field_key.meta_value as $field_key";
                     $joins .= " LEFT JOIN $wpdb->usermeta as um_$field_key on ( um_$field_key.user_id = users.ID AND um_$field_key.meta_key = '{$field_value['key']}' ) ";
+                    if ( !empty( $filter[$field_key] ) ){
+                        $where .= $wpdb->prepare( " AND um_$field_key.meta_value LIKE %s ", $filter[$field_key] ); //phpcs:ignore
+                    }
                 }
                 if ( $field_value['type'] === 'array' ){
                     $select .= ", um_$field_key.meta_value as $field_key";
                     $joins .= " LEFT JOIN $wpdb->usermeta as um_$field_key on ( um_$field_key.user_id = users.ID AND um_$field_key.meta_key = '{$field_value['key']}' ) ";
+                    if ( !empty( $filter[$field_key] ) ){
+                        $where .= $wpdb->prepare( " AND um_$field_key.meta_value LIKE %s ", '%'.$filter[$field_key].'%' ); //phpcs:ignore
+                    }
                 }
+                if ( $field_value['type'] === 'array_keys' ){
+                    if ( $field_key != 'capabilities' ){
+                        $select .= ", um_$field_key.meta_value as $field_key";
+                        $joins .= " LEFT JOIN $wpdb->usermeta as um_$field_key on ( um_$field_key.user_id = users.ID AND um_$field_key.meta_key = '{$field_value['key']}' ) ";
+                    }
+                    if ( !empty( $filter[$field_key] ) ){
+                        $where .= $wpdb->prepare( " AND um_$field_key.meta_value LIKE %s ", '%'.$filter[$field_key].'%' ); //phpcs:ignore
+                    }
+                }
+
                 if ( $field_value['type'] === 'location_grid' ){
                     $select .= ", GROUP_CONCAT(um_$field_key.meta_value) as $field_key";
                     $joins .= " LEFT JOIN $wpdb->usermeta as um_$field_key on ( um_$field_key.user_id = users.ID AND um_$field_key.meta_key = '{$field_value['key']}' ) ";
