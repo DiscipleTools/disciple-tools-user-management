@@ -175,7 +175,6 @@ export class UsersTable extends LitElement {
                   } else {
                     return html`<td data-field="${k}"></td>`
                   }
-                  
                 })}
             </tr>
             <tr>
@@ -187,7 +186,7 @@ export class UsersTable extends LitElement {
                 })}
             </tr>
             
-            ${this.users.length && this.users.map(user => html`
+            ${this.users.length ? this.users.map(user => html`
                 <tr data-user="${user.ID}" @click="${this.open_edit_modal}">
                     ${Object.keys(window.dt_users_table.fields).map(k=>{
                       if ( window.dt_users_table.fields[k].hidden === true  ) return;
@@ -222,7 +221,7 @@ export class UsersTable extends LitElement {
                     })}
                 </tr>
             `
-            )}
+            ) : html`` }
         </table>
     `;
   }

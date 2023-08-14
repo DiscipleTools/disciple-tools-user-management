@@ -138,7 +138,7 @@ class DT_Users_Table extends DT_Metrics_Chart_Base
 
     public function get_users_endpoint( WP_REST_Request $request ){
         $params = $request->get_params();
-        return self::get_users( [ 'locale' ], $params );
+        return self::get_users( $params );
     }
 
     public static function user_fields(){
@@ -232,8 +232,36 @@ class DT_Users_Table extends DT_Metrics_Chart_Base
         return $fields;
     }
 
-    public static function get_users( $meta_fields, $params = [] ){
+    /**
+     * Get names for location_grid ids
+     */
+    public static function get_location_grid_names( $users_query ){
         global $wpdb;
+        $location_grid_ids = [];
+        foreach ( $users_query as $users ){
+            if ( !empty( $users['location_grid'] ) ){
+                $location_grid_ids = array_merge( $location_grid_ids, explode( ',', $users['location_grid'] ) );
+            }
+        }
+        $location_grid_ids = array_unique( $location_grid_ids );
+        $location_grid_ids_sql = dt_array_to_sql( $location_grid_ids );
+        //phpcs:disable
+        $location_names_query = $wpdb->get_results( "
+            SELECT alt_name, grid_id
+            FROM $wpdb->dt_location_grid
+            WHERE grid_id IN ( $location_grid_ids_sql )
+        ", ARRAY_A );
+        //phpcs:enable
+        $location_names = [];
+        foreach ( $location_names_query as $location ){
+            $location_names[ $location['grid_id'] ] = $location['alt_name'];
+        }
+        return $location_names;
+    }
+
+    public static function get_users( $params = [] ){
+        global $wpdb;
+        $user_fields = self::user_fields();
 
         $limit = 1000;
         if ( isset( $params['limit'] ) ){
@@ -245,9 +273,11 @@ class DT_Users_Table extends DT_Metrics_Chart_Base
         $joins = '';
         $where = '';
 
-        $search = !empty( $params['search'] ) ? $params['search'] : '';
+        /**
+         * Search users for a string
+         */
+        $search = esc_sql( !empty( $params['search'] ) ? $params['search'] : '' );
         if ( !empty( $params['search'] ) ){
-            $search = esc_sql( $search );
             $columns = [ 'user_login', 'user_email', 'display_name' ];
             $where .= ' AND ( ';
             foreach ( $columns as $column ){
@@ -257,24 +287,29 @@ class DT_Users_Table extends DT_Metrics_Chart_Base
             $where .= ' ) ';
         }
 
-        $user_fields = self::user_fields();
+        /**
+         * Sort by selected fields
+         */
         $sort_sql = '';
         $sort = $params['sort'] ?? '';
         $dir = ( !empty( $sort ) && $sort[0] === '-' ) ? 'DESC' : 'ASC';
-        $sort_field = str_replace( '-', '', $sort );
+        $sort_field = esc_sql( str_replace( '-', '', $sort ) );
         if ( !empty( $sort_field ) ){
-            $table = isset( $user_fields[$sort_field]['table'] ) ? $user_fields[$sort_field]['table'] : '';
+            $table = $user_fields[$sort_field]['table'] ?? '';
             if ( in_array( $table, [ 'users_table', 'usermeta_table' ] ) ){
                 $table = $user_fields[$sort_field]['table'];
                 if ( $table === 'users_table' ){
-                    $sort_sql = 'ORDER BY users.' . esc_sql( $sort_field ) . ' ' . $dir;
+                    $sort_sql = 'ORDER BY users.' . $sort_field . ' ' . $dir;
                 } else {
-                    $sort_sql = 'ORDER BY um_' . esc_sql( $sort_field ) . '.meta_value IS NULL, um_' . esc_sql( $sort_field ) . '.meta_value ' . $dir;
+                    $sort_sql = 'ORDER BY um_' . $sort_field . '.meta_value IS NULL, um_' . $sort_field . '.meta_value ' . $dir;
                 }
             }
         }
 
 
+        /**
+         * Get a list of the field types
+         */
         $fields_by_type = [];
         foreach ( $user_fields as $field_key => $field_value ){
             if ( !isset( $fields_by_type[ $field_value['type'] ] ) ){
@@ -284,9 +319,18 @@ class DT_Users_Table extends DT_Metrics_Chart_Base
         }
 
         foreach ( $user_fields as $field_key => $field_value ){
+            $field_key = esc_sql( $field_key );
+            $field_value = esc_sql( $field_value );
+
+            /**
+             * Build query for the users table fields
+             */
             if ( $field_value['table'] === 'users_table' ){
                 $select .= ", users.$field_key as $field_key";
             }
+            /**
+             * Build query for the usermeta table fields
+             */
             if ( $field_value['table'] === 'usermeta_table' && isset( $field_value['key'] ) ){
                 if ( $field_value['type'] === 'text' ){
                     $select .= ", um_$field_key.meta_value as $field_key";
@@ -296,14 +340,14 @@ class DT_Users_Table extends DT_Metrics_Chart_Base
                     $select .= ", um_$field_key.meta_value as $field_key";
                     $joins .= " LEFT JOIN $wpdb->usermeta as um_$field_key on ( um_$field_key.user_id = users.ID AND um_$field_key.meta_key = '{$field_value['key']}' ) ";
                     if ( !empty( $filter[$field_key] ) ){
-                        $where .= $wpdb->prepare( " AND um_$field_key.meta_value LIKE %s ", $filter[$field_key] ); //phpcs:ignore
+                        $where .= $wpdb->prepare( " AND um_$field_key.meta_value LIKE %s ", esc_sql( $filter[$field_key] ) ); //phpcs:ignore
                     }
                 }
                 if ( $field_value['type'] === 'array' ){
                     $select .= ", um_$field_key.meta_value as $field_key";
                     $joins .= " LEFT JOIN $wpdb->usermeta as um_$field_key on ( um_$field_key.user_id = users.ID AND um_$field_key.meta_key = '{$field_value['key']}' ) ";
                     if ( !empty( $filter[$field_key] ) ){
-                        $where .= $wpdb->prepare( " AND um_$field_key.meta_value LIKE %s ", '%'.$filter[$field_key].'%' ); //phpcs:ignore
+                        $where .= $wpdb->prepare( " AND um_$field_key.meta_value LIKE %s ", '%'. esc_sql( $filter[$field_key] ) .'%' ); //phpcs:ignore
                     }
                 }
                 if ( $field_value['type'] === 'array_keys' ){
@@ -312,7 +356,7 @@ class DT_Users_Table extends DT_Metrics_Chart_Base
                         $joins .= " LEFT JOIN $wpdb->usermeta as um_$field_key on ( um_$field_key.user_id = users.ID AND um_$field_key.meta_key = '{$field_value['key']}' ) ";
                     }
                     if ( !empty( $filter[$field_key] ) ){
-                        $where .= $wpdb->prepare( " AND um_$field_key.meta_value LIKE %s ", '%'.$filter[$field_key].'%' ); //phpcs:ignore
+                        $where .= $wpdb->prepare( " AND um_$field_key.meta_value LIKE %s ", '%'. esc_sql( $filter[$field_key] ) .'%' ); //phpcs:ignore
                     }
                 }
 
@@ -320,13 +364,16 @@ class DT_Users_Table extends DT_Metrics_Chart_Base
                     $select .= ", GROUP_CONCAT(um_$field_key.meta_value) as $field_key";
                     $joins .= " LEFT JOIN $wpdb->usermeta as um_$field_key on ( um_$field_key.user_id = users.ID AND um_$field_key.meta_key = '{$field_value['key']}' ) ";
                     if ( !empty( $filter[$field_key] ) ){
-                        $where .= $wpdb->prepare( " AND um_$field_key.meta_value LIKE %s ", $filter[$field_key] ); //phpcs:ignore
+                        $where .= $wpdb->prepare( " AND um_$field_key.meta_value LIKE %s ", esc_sql( $filter[$field_key] ) ); //phpcs:ignore
                     }
                 }
             }
+            /**
+             * Build query for the postmeta table fields
+             */
             if ( $field_value['table'] === 'postmeta' ){
-                $meta_key = $field_value['meta_key'];
-                $meta_value = $field_value['meta_value'];
+                $meta_key = esc_sql( $field_value['meta_key'] );
+                $meta_value = esc_sql( $field_value['meta_value'] );
                 $select .= ", $field_key.count as $field_key";
                 $inner = '';
                 if ( !empty( $meta_key ) ){
@@ -347,6 +394,9 @@ class DT_Users_Table extends DT_Metrics_Chart_Base
                     $sort_sql = " ORDER BY $field_key.count $dir ";
                 }
             }
+            /**
+             * Build query for the dt_activity_log table fields
+             */
             if ( $field_value['table'] === 'dt_activity_log' ){
                 $select .= ", $field_key.last_activity as $field_key";
                 $joins .= " LEFT JOIN ( SELECT user_id,
@@ -382,28 +432,14 @@ class DT_Users_Table extends DT_Metrics_Chart_Base
         ARRAY_A );
         //phpcs:enable
 
-        //get location names
-        $location_grid_ids = [];
-        foreach ( $users_query as $users ){
-            if ( !empty( $users['location_grid'] ) ){
-                $location_grid_ids = array_merge( $location_grid_ids, explode( ',', $users['location_grid'] ) );
-            }
-        }
-        $location_grid_ids = array_unique( $location_grid_ids );
-        $location_grid_ids_sql = dt_array_to_sql( $location_grid_ids );
-        //phpcs:disable
-        //already sanitized IN value
-        $location_names_query = $wpdb->get_results( "
-            SELECT alt_name, grid_id
-            FROM $wpdb->dt_location_grid
-            WHERE grid_id IN ( $location_grid_ids_sql )
-        ", ARRAY_A );
-        //phpcs:enable
-        $location_names = [];
-        foreach ( $location_names_query as $location ){
-            $location_names[ $location['grid_id'] ] = $location['alt_name'];
-        }
+        /**
+         * Get the location names for the location grid ids
+         */
+        $location_names = self::get_location_grid_names( $users_query );
 
+        /**
+         * Format the results
+         */
         foreach ( $users_query as &$user ){
             foreach ( $fields_by_type['array'] as $field_key ){
                 if ( isset( $user[ $field_key ] ) ){
@@ -417,7 +453,6 @@ class DT_Users_Table extends DT_Metrics_Chart_Base
                 }
             }
             foreach ( $fields_by_type['location_grid'] as $field_key ){
-
                 if ( isset( $user[$field_key] ) ){
                     $grid_ids = explode( ',', $user[$field_key] );
                     $locations = [];
@@ -432,12 +467,12 @@ class DT_Users_Table extends DT_Metrics_Chart_Base
             }
         }
 
-        //total users count
+        /**
+         * Get the total users count
+         */
         $total_users = $wpdb->get_var( $wpdb->prepare( "
-            SELECT count( users.ID)
-            FROM $wpdb->users as users
+            SELECT count( users.ID) FROM $wpdb->users as users
             INNER JOIN $wpdb->usermeta as um_capabilities on ( um_capabilities.user_id = users.ID AND um_capabilities.meta_key = %s )
-            WHERE 1=1
             ", $wpdb->prefix . 'capabilities' ) );
 
         return [
@@ -447,6 +482,11 @@ class DT_Users_Table extends DT_Metrics_Chart_Base
     }
 
 
+    /**
+     * Fields to add by the ACCESS module
+     * @param $fields
+     * @return mixed
+     */
     public function dt_users_fields( $fields ){
         $fields['number_new_assigned'] = [
             'label' => 'Accept Needed',
