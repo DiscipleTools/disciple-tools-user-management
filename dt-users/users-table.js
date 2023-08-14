@@ -14,7 +14,7 @@ jQuery(document).ready(function($) {
     <users-table></users-table>`)
 })
 
-import {html, css, LitElement, range, map, classMap, unsafeCSS} from 'https://cdn.jsdelivr.net/gh/lit/dist@2/all/lit-all.min.js';
+import {html, css, LitElement} from 'https://cdn.jsdelivr.net/gh/lit/dist@2/core/lit-core.min.js';
 
 export class UsersTable extends LitElement {
   constructor() {
@@ -40,7 +40,9 @@ export class UsersTable extends LitElement {
       }
     }).then(res => res.json());
     this.loading = false;
-    this.users = users;
+    this.users = users.users;
+    this.total_users = users.total_users;
+
   }
 
   static properties = {
@@ -48,6 +50,7 @@ export class UsersTable extends LitElement {
     search: {type: String, state:true},
     sort: {type: String, state:true},
     loading : {type: Boolean, state:true},
+    total_users : {type: Number, state:true}
   }
 
   static get styles() {
@@ -71,7 +74,7 @@ export class UsersTable extends LitElement {
         }
         
         tr:not(.filter-row):nth-child(even) {
-          background-color: #dddddd;
+          background-color: #eee;
         }
         .sortable th {
           background-repeat: no-repeat;
@@ -146,7 +149,7 @@ export class UsersTable extends LitElement {
     return html`
         <div id="title-row">
             <div>
-                <h2>TABLE OF USERS ${this.loading ? html`<img style="height:1em;" src="${window.wpApiShare.template_dir}/spinner.svg" />` : ''}</h2>
+                <h2>USERS ${this.loading ? html`<img style="height:1em;" src="${window.wpApiShare.template_dir}/spinner.svg" />` : html`<span style="font-size: 14px;font-weight: normal">Showing ${this.users.length} of ${this.total_users} users`}</span></h2>
             </div>
             <div class="search-section">
                 <input id="search-users" type="text" placeholder="search">
