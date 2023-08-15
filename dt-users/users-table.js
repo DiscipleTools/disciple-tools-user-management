@@ -64,6 +64,11 @@ export class UsersTable extends LitElement {
     this.getUsers( this.search )
   }
 
+  clear_search(){
+    this.search = '';
+    this.getUsers( this.search )
+  }
+
   sort_column(e){
     let id = e.target.id;
     let sort = e.target.id;
@@ -96,7 +101,7 @@ export class UsersTable extends LitElement {
                 <h2>${this.translations.users} ${this.loading ? html`<img style="height:1em;" src="${window.wpApiShare.template_dir}/spinner.svg" alt="spinner" />` : html`<span style="font-size: 14px;font-weight: normal">${this.translations.showing_x_of_y.replace('%1$s', this.users.length).replace('%2$s', this.total_users)}`}</span></h2>
             </div>
             <div class="search-section">
-                <input id="search-users" type="text" placeholder="${this.translations.search}">
+                <input id="search-users" type="search" placeholder="${this.translations.search}" @search="${this.clear_search}">
                 <button class="button" @click="${this.search_text}">${this.translations.go}</button>
             </div>
 
@@ -220,6 +225,44 @@ export class UsersTable extends LitElement {
         }
         .loading-table {
           display: none;
+        }
+        
+        select {
+          width: 100%;
+          font-size: 14px;
+          line-height: 2;
+          color: #2c3338;
+          border-color: #8c8f94;
+          box-shadow: none;
+          border-radius: 3px;
+          padding: 0 24px 0 8px;
+          min-height: 30px;
+          max-width: 25rem;
+          -webkit-appearance: none;
+          background: #fff url(data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2220%22%20height%3D%2220%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpath%20d%3D%22M5%206l5%205%205-5%202%201-7%207-7-7%202-1z%22%20fill%3D%22%23555%22%2F%3E%3C%2Fsvg%3E) no-repeat right 5px top 55%;
+          background-size: 16px 16px;
+          cursor: pointer;
+          vertical-align: middle;
+        }
+        button {
+          margin-bottom: 0.2em;
+          margin-top: 0.2em;
+          padding: 0.4em 0.75em;
+          border-radius: 5px;
+          background-color: #3f729b;
+          color: #fefefe;
+          border: 1px solid transparent;
+          cursor: pointer;
+        }
+        input {
+          padding: 0 8px;
+          line-height: 2;
+          min-height: 30px;
+          box-shadow: 0 0 0 transparent;
+          border-radius: 4px;
+          border: 1px solid #8c8f94;
+          background-color: #fff;
+          color: #2c3338;
         }
       `
     ]
