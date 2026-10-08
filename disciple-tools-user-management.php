@@ -55,7 +55,6 @@ function dt_user_management() {
     }
 
     return DT_User_Management_Plugin::instance();
-
 }
 add_action( 'after_setup_theme', 'dt_user_management', 20 );
 
@@ -98,7 +97,6 @@ class DT_User_Management_Plugin {
         require_once( 'workflows/workflows.php' );
 
         require_once( 'dt-users/loader.php' );
-
     }
 
     public static function plugin_dir(){
@@ -260,7 +258,7 @@ if ( !function_exists( 'dt_hook_ajax_notice_handler' ) ){
 
 
 add_action( 'plugins_loaded', function (){
-    if ( is_admin() && !( is_multisite() && class_exists( 'DT_Multisite' ) ) || wp_doing_cron() ){
+    if ( ( is_admin() && !( is_multisite() && class_exists( 'DT_Multisite' ) ) ) || wp_doing_cron() ){
         // Check for plugin updates
         if ( ! class_exists( 'Puc_v4_Factory' ) ) {
             if ( file_exists( get_template_directory() . '/dt-core/libraries/plugin-update-checker/plugin-update-checker.php' ) ){
