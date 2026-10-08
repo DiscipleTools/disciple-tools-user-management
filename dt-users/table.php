@@ -90,7 +90,6 @@ class DT_Users_Table extends DT_Metrics_Chart_Base
             ],
             'fields' => $fields,
         ] );
-
     }
 
     public function get_used_user_locations(){
