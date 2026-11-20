@@ -1,8 +1,8 @@
 <?php
 /**
- * Plugin Name: Disciple.Tools - User Management
+ * Plugin Name: DEPRECATED - Disciple.Tools - User Management
  * Plugin URI: https://github.com/DiscipleTools/disciple-tools-user-management
- * Description: Disciple.Tools - User Management adds higher volume tools to large users systems.
+ * Description: DELETE ME - I'm a deprecated plugin
  * Text Domain: disciple-tools-user-management
  * Domain Path: /languages
  * Version:  0.1
@@ -56,18 +56,18 @@ function dt_user_management() {
 
     return DT_User_Management_Plugin::instance();
 }
-add_action( 'after_setup_theme', 'dt_user_management', 20 );
+//add_action( 'after_setup_theme', 'dt_user_management', 20 );
 
 //register the D.T Plugin
-add_filter( 'dt_plugins', function ( $plugins ){
-    $plugin_data = get_file_data( __FILE__, [ 'Version' => 'Version', 'Plugin Name' => 'Plugin Name' ], false );
-    $plugins['disciple-tools-user-management'] = [
-        'plugin_url' => trailingslashit( plugin_dir_url( __FILE__ ) ),
-        'version' => $plugin_data['Version'] ?? null,
-        'name' => $plugin_data['Plugin Name'] ?? null,
-    ];
-    return $plugins;
-});
+//add_filter( 'dt_plugins', function ( $plugins ){
+//    $plugin_data = get_file_data( __FILE__, [ 'Version' => 'Version', 'Plugin Name' => 'Plugin Name' ], false );
+//    $plugins['disciple-tools-user-management'] = [
+//        'plugin_url' => trailingslashit( plugin_dir_url( __FILE__ ) ),
+//        'version' => $plugin_data['Version'] ?? null,
+//        'name' => $plugin_data['Plugin Name'] ?? null,
+//    ];
+//    return $plugins;
+//});
 
 /**
  * Singleton class for setting up the plugin.
